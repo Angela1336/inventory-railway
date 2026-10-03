@@ -1,9 +1,9 @@
-name: Extract zip
+name: Extract update zip
 
 on:
   push:
     paths:
-      - 'inventory-railway.zip'
+      - '*.zip'
   workflow_dispatch:
 
 permissions:
@@ -15,20 +15,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract
+      - name: Extract semua zip di root repo
         run: |
-          if [ ! -f inventory-railway.zip ]; then
-            echo "Zip tidak ada, skip"
+          shopt -s nullglob
+          files=(*.zip)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "Tidak ada file zip di root."
             exit 0
           fi
-          unzip -q inventory-railway.zip -d /tmp/out
-          cp -a /tmp/out/inventory/. .
-          rm inventory-railway.zip
+          for f in "${files[@]}"; do
+            echo "Ekstrak $f"
+            unzip -o "$f" -d .
+            rm "$f"
+          done
 
-      - name: Commit
+      - name: Commit hasil ekstrak
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git diff --cached --quiet || git commit -m "Extract inventory-railway.zip"
+          git diff --cached --quiet && echo "Tidak ada perubahan." && exit 0
+          git commit -m "Apply update dari zip"
           git push

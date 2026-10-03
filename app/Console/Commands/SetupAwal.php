@@ -24,15 +24,14 @@ class SetupAwal extends Command
         $email = env('KASIR_EMAIL');
         $password = env('KASIR_PASSWORD');
 
-        if ($email && $password && ! User::where('email', $email)->exists()) {
-            $user = User::create([
-                'name' => env('KASIR_NAME', 'Kasir'),
-                'email' => $email,
-                'password' => Hash::make($password),
-            ]);
-            $user->forceFill(['email_verified_at' => now()])->save();
-            $this->info("Akun kasir {$email} dibuat.");
-        }
+        if ($email && $password) {
+    $user = User::updateOrCreate(
+        ['email' => $email],
+        ['name' => env('KASIR_NAME', 'Kasir'), 'password' => $password]
+    );
+    $user->forceFill(['email_verified_at' => now()])->save();
+    $this->info("Akun kasir {$email} siap.");
+}
 
         return self::SUCCESS;
     }

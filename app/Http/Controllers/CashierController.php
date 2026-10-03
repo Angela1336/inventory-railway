@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Member;
 use App\Services\MembershipService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class CashierController extends Controller
@@ -15,8 +16,17 @@ class CashierController extends Controller
         $member = null;
         $q = trim($r->query('q', ''));
 
+        // Isi QR = link kartu (.../kartu/{token}); ambil token-nya saja
+        if (str_contains($q, '/kartu/')) {
+            $q = Str::before(Str::afterLast($q, '/kartu/'), '?');
+            $q = trim($q, '/ ');
+        }
+
         if ($q !== '') {
-            $member = Member::where('member_code', $q)->orWhere('phone', $q)->first();
+            $member = Member::where('member_code', $q)
+                ->orWhere('phone', $q)
+                ->orWhere('card_token', $q)
+                ->first();
 
             if ($member) {
                 $member->load(['vouchers' => fn ($v) => $v
@@ -58,6 +68,8 @@ class CashierController extends Controller
         return view('kasir.register');
     }
 
+    // Daftarkan member, lalu langsung buka WhatsApp ke nomor member
+    // dengan pesan + link kartu member yang sudah terisi
     public function store(Request $r, MembershipService $svc)
     {
         $data = $r->validate([
@@ -69,7 +81,6 @@ class CashierController extends Controller
 
         $member = $svc->register($data);
 
-        return redirect()->route('kasir.index', ['q' => $member->phone])
-            ->with('success', "Member {$member->name} terdaftar dengan kode {$member->member_code}. Voucher selamat datang sudah masuk.");
+        return redirect()->away($member->whatsappUrl());
     }
 }

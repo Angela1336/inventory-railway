@@ -3,26 +3,16 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CashierController;
 use App\Http\Controllers\MemberCardController;
+use App\Http\Controllers\PublicRegisterController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
-Route::get('/', function () {
-    return redirect('/kasir');
-});
+// Halaman depan = pembeli daftar member sendiri
+// Halaman depan: langsung ke kasir (belum login otomatis diarahkan ke login)
+Route::get('/', fn () => redirect()->route('kasir.index'))->name('home');
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    return redirect()->route('kasir.index');
+})->middleware('auth')->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
